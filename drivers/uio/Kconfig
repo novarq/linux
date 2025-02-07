@@ -164,4 +164,12 @@ config UIO_DFL
 	    opae-sdk/tools/libopaeuio/
 
 	  If you compile this as a module, it will be called uio_dfl.
+
+config UIO_SPARX5_IRQMUX
+	tristate "Generic driver for Sparx5 SoC"
+	depends on OF
+	help
+	  Driver for acessing Sparx5 Switch and IRQs. It provides
+	  switch access from userspace.
+
 endif
