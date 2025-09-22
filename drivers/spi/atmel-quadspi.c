@@ -1052,9 +1052,9 @@ static int atmel_qspi_set_pad_calibration(struct atmel_qspi *aq)
 					  ATMEL_QSPI_TIMEOUT);
 
 	/* Refresh analogic blocks every 1 ms.*/
-	atmel_qspi_write(FIELD_PREP(QSPI_REFRESH_DELAY_COUNTER,
+	/*atmel_qspi_write(FIELD_PREP(QSPI_REFRESH_DELAY_COUNTER,
 				    aq->target_max_speed_hz / 1000),
-			 aq, QSPI_REFRESH);
+			 aq, QSPI_REFRESH);*/
 
 	return ret;
 }
@@ -1113,7 +1113,7 @@ static int atmel_qspi_sama7g5_init(struct atmel_qspi *aq)
 	 * Check if the SoC supports pad calibration in Octal SPI mode.
 	 * Proceed only if both the capabilities are true.
 	 */
-	if (aq->caps->octal && aq->caps->has_padcalib) {
+	if (aq->caps->has_padcalib) {
 		ret = atmel_qspi_set_pad_calibration(aq);
 		if (ret)
 			return ret;
@@ -1671,6 +1671,17 @@ static const struct atmel_qspi_caps atmel_sama7g5_qspi_caps = {
 	.has_dllon = true,
 };
 
+static const struct atmel_qspi_caps microchip_lan969x_qspi_caps = {
+	.max_speed_hz = SAM9X7_QSPI_MAX_SPEED_HZ,
+	.has_gclk = true,
+	.octal = false,
+	/* It supports using DMA but its currently broken */
+	.has_dma = false,
+	.has_2xgclk = false,
+	.has_padcalib = true,
+	.has_dllon = true,
+};
+
 static const struct of_device_id atmel_qspi_dt_ids[] = {
 	{
 		.compatible = "atmel,sama5d2-qspi",
@@ -1699,6 +1710,10 @@ static const struct of_device_id atmel_qspi_dt_ids[] = {
 	{
 		.compatible = "microchip,sama7d65-qspi",
 		.data = &atmel_sama7d65_qspi_caps,
+	},
+	{
+		.compatible = "microchip,lan9691-qspi",
+		.data = &microchip_lan969x_qspi_caps,
 	},
 
 
