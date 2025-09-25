@@ -19,6 +19,7 @@ properties:
       - enum:
           - atmel,sama5d2-sdhci
           - microchip,sam9x60-sdhci
+          - microchip,lan9691-sdhci
       - items:
           - enum:
               - microchip,sam9x7-sdhci
