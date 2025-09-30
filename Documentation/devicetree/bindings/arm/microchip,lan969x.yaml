@@ -23,6 +23,13 @@ properties:
         items:
           - const: microchip,ev23x71a
           - const: microchip,lan969x
+      - description: Novarq Tactical 1000 is 24x1G + 4x 10G switch.
+        items:
+          - enum:
+              - novarq,tactical-1000-v1
+              - novarq,tactical-1000-v2
+              - novarq,tactical-1000-v3
+          - const: microchip,lan969x
 
 required:
   - compatible
