@@ -1,5 +1,10 @@
 # SPDX-License-Identifier: GPL-2.0
 dtb-$(CONFIG_ARCH_LAN969X) += lan9696-ev23x71a.dtb
+dtb-$(CONFIG_ARCH_LAN969X) += lan9696-tactical-1000.dtb
+dtb-$(CONFIG_ARCH_LAN969X) += lan9696-tactical-1000-poe.dtbo
+lan9696-tactical-1000-poe-combined-dtbs := lan9696-tactical-1000.dtb \
+	lan9696-tactical-1000-poe.dtbo
+dtb-$(CONFIG_ARCH_LAN969X) += lan9696-tactical-1000-poe-combined.dtb
 dtb-$(CONFIG_ARCH_SPARX5) += sparx5_pcb125.dtb
 dtb-$(CONFIG_ARCH_SPARX5) += sparx5_pcb134.dtb sparx5_pcb134_emmc.dtb
 dtb-$(CONFIG_ARCH_SPARX5) += sparx5_pcb135.dtb sparx5_pcb135_emmc.dtb
