@@ -1,0 +1,85 @@
+// SPDX-License-Identifier: GPL-2.0-or-later OR MIT
+
+/dts-v1/;
+
+#include <dt-bindings/input/input.h>
+#include "lan969x-tactical-1000-v2.dtsi"
+
+/ {
+	model = "Novarq Tactical 1000 v3";
+	compatible = "novarq,tactical-1000-v3", "microchip,lan969x";
+
+	keys {
+		compatible = "gpio-keys";
+		pinctrl-0 = <&button_pins>;
+		pinctrl-names = "default";
+
+		reset {
+			label = "reset";
+			gpios = <&gpio 2 GPIO_ACTIVE_LOW>;
+			linux,code = <KEY_RESTART>;
+		};
+	};
+};
+
+&i2c_mux {
+	i2c_rtc: i2c@4 {
+		reg = <0x4>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		rtc@6f {
+			compatible = "microchip,mcp7940x";
+			reg = <0x6f>;
+		};
+	};
+
+	i2c_tmp: i2c@6 {
+		reg = <0x6>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		temperature-sensor@48 {
+			compatible = "ti,tmp1075";
+			reg = <0x48>;
+		};
+	};
+};
+
+&gpio {
+	button_pins: button-pins {
+		pins = "GPIO_2";
+		function = "gpio";
+	};
+
+	case_fan_pins: case-fan-pins {
+		pins = "GPIO_59";
+		function = "gpio";
+	};
+
+	fc2_pins: fc2-pins {
+		pins = "GPIO_65", "GPIO_66";
+		function = "fc";
+	};
+};
+
+&case_gpio_fan {
+	gpios = <&gpio 59 GPIO_ACTIVE_HIGH>;
+};
+
+&flx2 {
+	atmel,flexcom-mode = <ATMEL_FLEXCOM_MODE_TWI>;
+	status = "okay";
+};
+
+&i2c2 {
+	pinctrl-0 = <&fc2_pins>;
+	pinctrl-names = "default";
+	i2c-analog-filter;
+	i2c-digital-filter;
+	i2c-digital-filter-width-ns = <35>;
+	i2c-sda-hold-time-ns = <1500>;
+	status = "okay";
+
+	/* ATECC608C lives here on 0x60 */
+};
