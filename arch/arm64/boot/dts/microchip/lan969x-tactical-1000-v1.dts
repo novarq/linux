@@ -1,0 +1,10 @@
+// SPDX-License-Identifier: GPL-2.0-or-later OR MIT
+
+/dts-v1/;
+
+#include "lan969x-tactical-1000.dtsi"
+
+/ {
+	model = "Novarq Tactical 1000 v1";
+	compatible = "novarq,tactical-1000-v1", "microchip,lan969x";
+};
