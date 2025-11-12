@@ -463,6 +463,16 @@
 	};
 };
 
+&otp {
+	nvmem-layout {
+		compatible = "microchip,otp-layout";
+
+		base_mac_address: base-mac-address {
+			#nvmem-cell-cells = <1>;
+		};
+	};
+};
+
 &qspi0 {
 	status = "okay";
 
@@ -516,6 +526,8 @@
 &switch {
 	pinctrl-0 = <&ptp_out_pins>, <&ptp_ext_pins>;
 	pinctrl-names = "default";
+	nvmem-cells = <&base_mac_address 0>;
+	nvmem-cell-names = "mac-address";
 	status = "okay";
 
 	ethernet-ports {
