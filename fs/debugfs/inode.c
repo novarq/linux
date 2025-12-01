@@ -35,7 +35,7 @@
 static struct vfsmount *debugfs_mount;
 static int debugfs_mount_count;
 static bool debugfs_registered;
-static bool debugfs_enabled __ro_after_init = IS_ENABLED(DEBUG_FS_ALLOW_ALL);
+static unsigned int debugfs_allow __ro_after_init = DEFAULT_DEBUGFS_ALLOW_BITS;
 
 /*
  * Don't allow access attributes to be changed whilst the kernel is locked down
@@ -365,7 +365,7 @@ static struct dentry *debugfs_start_creating(const char *name,
 	struct dentry *dentry;
 	int error;
 
-	if (!debugfs_enabled)
+	if (!(debugfs_allow & DEBUGFS_ALLOW_API))
 		return ERR_PTR(-EPERM);
 
 	if (!debugfs_initialized())
@@ -880,25 +880,21 @@ static int __init debugfs_kernel(char *str)
 {
 	if (str) {
 		if (!strcmp(str, "on"))
-			debugfs_enabled = true;
+			debugfs_allow = DEBUGFS_ALLOW_API | DEBUGFS_ALLOW_MOUNT;
+		else if (!strcmp(str, "no-mount"))
+			debugfs_allow = DEBUGFS_ALLOW_API;
 		else if (!strcmp(str, "off"))
-			debugfs_enabled = false;
-		else if (!strcmp(str, "no-mount")) {
-			pr_notice("debugfs=no-mount is a deprecated alias "
-				  "for debugfs=off\n");
-			debugfs_enabled = false;
-		}
+			debugfs_allow = 0;
 	}
 
 	return 0;
 }
 early_param("debugfs", debugfs_kernel);
-
 static int __init debugfs_init(void)
 {
 	int retval;
 
-	if (!debugfs_enabled)
+	if (!(debugfs_allow & DEBUGFS_ALLOW_MOUNT))
 		return -EPERM;
 
 	retval = sysfs_create_mount_point(kernel_kobj, "debug");
