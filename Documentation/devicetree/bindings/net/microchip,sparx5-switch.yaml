@@ -92,6 +92,10 @@ properties:
 
   mac-address: true
 
+  nvmem-cells: true
+
+  nvmem-cell-names: true
+
   ethernet-ports:
     type: object
     additionalProperties: false
