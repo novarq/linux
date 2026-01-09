@@ -249,6 +249,12 @@ properties:
           - const: microchip,lan9696
           - const: microchip,lan9691
 
+      - description: Novarq Tactical 1000
+        items:
+          - const: novarq,tactical-1000
+          - const: microchip,lan9696
+          - const: microchip,lan9691
+
       - description: Kontron KSwitch D10 MMT series
         items:
           - enum:
