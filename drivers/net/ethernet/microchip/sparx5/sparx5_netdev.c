@@ -249,6 +249,7 @@ static const struct net_device_ops sparx5_port_netdev_ops = {
 	.ndo_open               = sparx5_port_open,
 	.ndo_stop               = sparx5_port_stop,
 	.ndo_start_xmit         = sparx5_port_xmit_impl,
+	.ndo_change_mtu         = sparx5_mtu_change,
 	.ndo_set_rx_mode        = sparx5_set_rx_mode,
 	.ndo_get_phys_port_name = sparx5_port_get_phys_port_name,
 	.ndo_set_mac_address    = sparx5_set_mac_address,
@@ -278,6 +279,8 @@ struct net_device *sparx5_create_netdev(struct sparx5 *sparx5, u32 portno)
 
 	ndev->hw_features |= NETIF_F_HW_TC;
 	ndev->features |= NETIF_F_HW_TC;
+	/* The MAC supports frame lengths of up to 14,000 bytes */
+	ndev->max_mtu = 14000;
 
 	SET_NETDEV_DEV(ndev, sparx5->dev);
 	spx5_port = netdev_priv(ndev);

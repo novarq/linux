@@ -1082,11 +1082,13 @@ static const struct sparx5_ops sparx5_ops = {
 	.get_port_dev_bit        = &sparx5_port_dev_mapping,
 	.get_hsch_max_group_rate = &sparx5_get_hsch_max_group_rate,
 	.get_sdlb_group          = &sparx5_get_sdlb_group,
+	.get_mtu                 = &sparx5_mtu_max,
 	.set_port_mux            = &sparx5_port_mux_set,
 	.ptp_irq_handler         = &sparx5_ptp_irq_handler,
 	.dsm_calendar_calc       = &sparx5_dsm_calendar_calc,
 	.fdma_init               = &sparx5_fdma_init,
 	.fdma_deinit             = &sparx5_fdma_deinit,
+	.fdma_resize             = &sparx5_fdma_resize,
 	.fdma_poll               = &sparx5_fdma_napi_callback,
 	.fdma_xmit               = &sparx5_fdma_xmit,
 };

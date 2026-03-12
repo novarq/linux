@@ -188,6 +188,7 @@ struct sparx5_tx {
 	struct sparx5_tx_buf *dbs;
 	u64 packets;
 	u64 dropped;
+	u16 max_mtu;
 };
 
 struct sparx5_port_config {
@@ -334,6 +335,7 @@ struct sparx5_ops {
 	u32  (*get_port_dev_index)(struct sparx5 *sparx5, int port);
 	u32  (*get_port_dev_bit)(struct sparx5 *sparx5, int port);
 	u32  (*get_hsch_max_group_rate)(int grp);
+	u32  (*get_mtu)(struct sparx5 *sparx5);
 	struct sparx5_sdlb_group *(*get_sdlb_group)(int idx);
 	int (*set_port_mux)(struct sparx5 *sparx5, struct sparx5_port *port,
 			    struct sparx5_port_config *conf);
@@ -345,6 +347,7 @@ struct sparx5_ops {
 				 struct sparx5_port_config *conf);
 	int (*fdma_init)(struct sparx5 *sparx5);
 	int (*fdma_deinit)(struct sparx5 *sparx5);
+	int (*fdma_resize)(struct sparx5 *sparx5);
 	int (*fdma_poll)(struct napi_struct *napi, int weight);
 	int (*fdma_xmit)(struct sparx5 *sparx5, u32 *ifh, struct sk_buff *skb,
 			 struct net_device *dev);
@@ -468,6 +471,7 @@ int sparx5_fdma_xmit(struct sparx5 *sparx5, u32 *ifh, struct sk_buff *skb,
 irqreturn_t sparx5_fdma_handler(int irq, void *args);
 void sparx5_fdma_reload(struct sparx5 *sparx5, struct fdma *fdma);
 void sparx5_fdma_injection_mode(struct sparx5 *sparx5);
+int sparx5_fdma_resize(struct sparx5 *sparx5);
 
 /* sparx5_mactable.c */
 int sparx5_mact_learn(struct sparx5 *sparx5, int port,
@@ -711,6 +715,10 @@ int sparx5_mirror_add(struct sparx5_mall_entry *entry);
 void sparx5_mirror_del(struct sparx5_mall_entry *entry);
 void sparx5_mirror_stats(struct sparx5_mall_entry *entry,
 			 struct flow_stats *fstats);
+
+/* sparx5_mtu.c */
+int sparx5_mtu_change(struct net_device *dev, int new_mtu);
+u32 sparx5_mtu_max(struct sparx5 *sparx5);
 
 /* Clock period in picoseconds */
 static inline u32 sparx5_clk_period(enum sparx5_core_clockfreq cclock)

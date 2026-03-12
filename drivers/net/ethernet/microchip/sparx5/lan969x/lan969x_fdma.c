@@ -402,3 +402,52 @@ int lan969x_fdma_deinit(struct sparx5 *sparx5)
 
 	return 0;
 }
+
+int lan969x_fdma_resize(struct sparx5 *sparx5)
+{
+	struct page_pool *page_pool_old = sparx5->rx.page_pool;
+	struct fdma *tx_fdma_old = &sparx5->tx.fdma;
+	struct fdma *rx_fdma_old = &sparx5->rx.fdma;
+	u32 old_mtu = sparx5->tx.max_mtu;
+	int err;
+
+	sparx5_fdma_stop(sparx5);
+	lan969x_fdma_free_pages(&sparx5->rx);
+
+	err = lan969x_fdma_init(sparx5);
+	if (err)
+		goto restore;
+
+	fdma_free_coherent(sparx5->dev, rx_fdma_old);
+	fdma_free_coherent(sparx5->dev, tx_fdma_old);
+	page_pool_destroy(page_pool_old);
+
+	goto start;
+
+restore:
+
+	/* At this point, the FDMA engine is stopped and the stack is not
+	 * calling us for xmit. Restore the old MTU and rx,tx buffers and
+	 * restart the engine.
+	 */
+
+	sparx5->tx.max_mtu = old_mtu;
+	sparx5->rx.page_pool = page_pool_old;
+	memcpy(&sparx5->tx.fdma, tx_fdma_old, sizeof(struct fdma));
+	memcpy(&sparx5->rx.fdma, rx_fdma_old, sizeof(struct fdma));
+
+	/* Old buffers have to be re-initialized. */
+
+	fdma_dcbs_init(&sparx5->rx.fdma,
+		       FDMA_DCB_INFO_DATAL(sparx5->rx.fdma.db_size),
+		       FDMA_DCB_STATUS_INTR);
+
+	fdma_dcbs_init(&sparx5->tx.fdma,
+		       FDMA_DCB_INFO_DATAL(sparx5->tx.fdma.db_size),
+		       FDMA_DCB_STATUS_DONE);
+
+start:
+	sparx5_fdma_start(sparx5);
+
+	return err;
+}
