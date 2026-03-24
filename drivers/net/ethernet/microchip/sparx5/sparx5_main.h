@@ -102,6 +102,7 @@ enum sparx5_feature {
 #define PGID_TABLE_SIZE	       3290
 
 #define IFH_LEN                9 /* 36 bytes */
+#define IFH_LEN_BYTES          (IFH_LEN * sizeof(u32))
 #define NULL_VID               0
 #define SPX5_MACT_PULL_DELAY   (2 * HZ)
 #define SPX5_STATS_CHECK_DELAY (1 * HZ)
@@ -188,6 +189,7 @@ struct sparx5_tx {
 	struct sparx5_tx_buf *dbs;
 	u64 packets;
 	u64 dropped;
+	u16 max_mtu;
 };
 
 struct sparx5_port_config {
@@ -348,6 +350,8 @@ struct sparx5_ops {
 	int (*fdma_poll)(struct napi_struct *napi, int weight);
 	int (*fdma_xmit)(struct sparx5 *sparx5, u32 *ifh, struct sk_buff *skb,
 			 struct net_device *dev);
+	int (*fdma_resize)(struct sparx5 *sparx5);
+	u32 (*get_mtu)(struct sparx5 *sparx5);
 };
 
 struct sparx5_main_io_resource {
@@ -711,6 +715,10 @@ int sparx5_mirror_add(struct sparx5_mall_entry *entry);
 void sparx5_mirror_del(struct sparx5_mall_entry *entry);
 void sparx5_mirror_stats(struct sparx5_mall_entry *entry,
 			 struct flow_stats *fstats);
+
+/* sparx5_mtu.c */
+int sparx5_mtu_change(struct net_device *dev, int new_mtu);
+u32 sparx5_mtu_max(struct sparx5 *sparx5);
 
 /* Clock period in picoseconds */
 static inline u32 sparx5_clk_period(enum sparx5_core_clockfreq cclock)
