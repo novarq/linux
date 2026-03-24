@@ -354,6 +354,8 @@ static const struct sparx5_ops lan969x_ops = {
 	.fdma_deinit             = &lan969x_fdma_deinit,
 	.fdma_poll               = &lan969x_fdma_napi_poll,
 	.fdma_xmit               = &lan969x_fdma_xmit,
+	.fdma_resize             = lan969x_fdma_resize,
+	.get_mtu                 = &sparx5_mtu_max,
 };
 
 const struct sparx5_match_data lan969x_desc = {
