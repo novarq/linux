@@ -462,6 +462,15 @@ int sparx5_fdma_start(struct sparx5 *sparx5)
 	sparx5_fdma_rx_activate(sparx5, rx);
 	sparx5_fdma_tx_activate(sparx5, tx);
 
+	for (int i = 0; i < sparx5->data->consts->n_ports; i++) {
+		struct sparx5_port *port = sparx5->ports[i];
+
+		if (!port)
+			continue;
+		if (netif_queue_stopped(port->ndev))
+			netif_wake_queue(port->ndev);
+	}
+
 	return 0;
 }
 
@@ -471,6 +480,7 @@ int sparx5_fdma_stop(struct sparx5 *sparx5)
 	struct sparx5_tx *tx = &sparx5->tx;
 	u32 val;
 
+	napi_synchronize(&sparx5->rx.napi);
 	napi_disable(&rx->napi);
 
 	/* Stop the fdma and channel interrupts */
@@ -481,6 +491,16 @@ int sparx5_fdma_stop(struct sparx5 *sparx5)
 	read_poll_timeout(sparx5_fdma_port_ctrl, val,
 			  FDMA_PORT_CTRL_XTR_BUF_IS_EMPTY_GET(val) == 0,
 			  500, 10000, 0, sparx5);
+
+	for (int i = 0; i < sparx5->data->consts->n_ports; i++) {
+		struct sparx5_port *port = sparx5->ports[i];
+
+		if (!port)
+			continue;
+		netif_stop_queue(port->ndev);
+	}
+
+	netif_napi_del(&sparx5->rx.napi);
 
 	return 0;
 }
