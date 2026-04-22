@@ -1241,13 +1241,18 @@ static int lan966x_qspi_init(struct atmel_qspi *aq)
 	/* Disable write protection */
 	atmel_qspi_write(QSPI_WPMR_WPKEY(wpkey), aq, QSPI_WPMR);
 
-	/* Set DLLON and STPCAL register */
-	atmel_qspi_write(QSPI_CR_DLLON | QSPI_CR_STPCAL, aq, QSPI_CR);
+	if (aq->caps->has_padcalib) {
+		ret = atmel_qspi_set_pad_calibration(aq);
+		if (ret)
+			return ret;
+	} else {
+		atmel_qspi_write(QSPI_CR_DLLON | QSPI_CR_STPCAL, aq, QSPI_CR);
 
-	if (!aq->caps->fpga &&
-	    (ret = atmel_qspi_poll_sr2_set(aq, QSPI_SR2_DLOCK))) {
-		dev_err(&aq->pdev->dev, "QSPI_SR2_DLOCK not set\n");
-		return ret;
+		if (!aq->caps->fpga &&
+		    (ret = atmel_qspi_poll_sr2_set(aq, QSPI_SR2_DLOCK))) {
+			dev_err(&aq->pdev->dev, "QSPI_SR2_DLOCK not set\n");
+			return ret;
+		}
 	}
 
 	/* Set the QSPI controller by default in Serial Memory Mode */
