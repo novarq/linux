@@ -18,6 +18,7 @@ properties:
       - microchip,pd69200
       - microchip,pd69210
       - microchip,pd69220
+      - microchip,pd77010
 
   reg:
     maxItems: 1
