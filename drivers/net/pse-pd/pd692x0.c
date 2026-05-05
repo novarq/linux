@@ -30,6 +30,10 @@
 #define PD692X0_FW_MIN_VER	5
 #define PD692X0_FW_PATCH_VER	5
 
+#define PD77010_FW_MAJ_VER	1
+#define PD77010_FW_MIN_VER	5
+#define PD77010_FW_PATCH_VER	0
+
 #define PD692X0_USER_BYTE	42
 
 enum pd692x0_fw_state {
@@ -93,10 +97,16 @@ struct pd692x0_matrix {
 	u8 hw_port_b;
 };
 
+enum pse_generation {
+	PSE_GEN_6,
+	PSE_GEN_7
+};
+
 struct pd692x0_info {
 	u8 fw_maj_ver;
 	u8 fw_min_ver;
 	u8 fw_patch_ver;
+	enum pse_generation pse_generation;
 };
 
 struct pd692x0_priv {
@@ -126,6 +136,14 @@ static const struct pd692x0_info pd69200_info = {
 	.fw_maj_ver = PD692X0_FW_MAJ_VER,
 	.fw_min_ver = PD692X0_FW_MIN_VER,
 	.fw_patch_ver = PD692X0_FW_PATCH_VER,
+	.pse_generation = PSE_GEN_6,
+};
+
+static const struct pd692x0_info pd77010_info = {
+	.fw_maj_ver = PD77010_FW_MAJ_VER,
+	.fw_min_ver = PD77010_FW_MIN_VER,
+	.fw_patch_ver = PD77010_FW_PATCH_VER,
+	.pse_generation = PSE_GEN_7,
 };
 
 /* Template list of communication messages. The non-null bytes defined here
@@ -823,12 +841,22 @@ static struct pd692x0_msg_ver pd692x0_get_sw_version(struct pd692x0_priv *priv)
 	}
 
 	/* Extract version from the message */
-	ver.prod = buf.sub[2];
-	ver.maj_sw_ver = (buf.data[0] << 8 | buf.data[1]) / 100;
-	ver.min_sw_ver = ((buf.data[0] << 8 | buf.data[1]) / 10) % 10;
-	ver.pa_sw_ver = (buf.data[0] << 8 | buf.data[1]) % 10;
-	ver.param = buf.data[2];
-	ver.build = buf.data[3];
+	if (priv->info->pse_generation == PSE_GEN_6) {
+		ver.prod = buf.sub[2];
+		ver.maj_sw_ver = (buf.data[0] << 8 | buf.data[1]) / 100;
+		ver.min_sw_ver = ((buf.data[0] << 8 | buf.data[1]) / 10) % 10;
+		ver.pa_sw_ver = (buf.data[0] << 8 | buf.data[1]) % 10;
+		ver.param = buf.data[2];
+		ver.build = buf.data[3];
+	} else {
+		ver.prod = buf.sub[2];
+		ver.maj_sw_ver = buf.data[0];
+		ver.min_sw_ver = buf.data[1];
+		ver.param = buf.data[2];
+		/* Unused on Gen 7 */
+		ver.pa_sw_ver = 0;
+		ver.build = 0;
+	}
 
 	return ver;
 }
@@ -1880,6 +1908,7 @@ static const struct of_device_id pd692x0_of_match[] = {
 	{ .compatible = "microchip,pd69200", .data = &pd69200_info },
 	{ .compatible = "microchip,pd69210", .data = &pd69200_info },
 	{ .compatible = "microchip,pd69220", .data = &pd69200_info },
+	{ .compatible = "microchip,pd77010", .data = &pd77010_info },
 	{ },
 };
 MODULE_DEVICE_TABLE(of, pd692x0_of_match);
