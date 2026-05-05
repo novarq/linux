@@ -98,6 +98,98 @@
 
 		i2c_poe: i2c@7 {
 			reg = <0x7>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			ethernet-pse@2c {
+				compatible = "microchip,pd77010";
+				reg = <0x2c>;
+				disable-ports-gpios = <&sgpio_out 0 0 GPIO_ACTIVE_LOW>;
+
+				managers {
+					#address-cells = <1>;
+					#size-cells = <0>;
+
+					pd7718t3_0: manager@0 {
+						reg = <0>;
+						#address-cells = <1>;
+						#size-cells = <0>;
+
+						phys0: port@0 {
+							reg = <0>;
+						};
+
+						phys1: port@1 {
+							reg = <1>;
+						};
+
+						phys2: port@2 {
+							reg = <2>;
+						};
+
+						phys3: port@3 {
+							reg = <3>;
+						};
+
+						phys4: port@4 {
+							reg = <4>;
+						};
+
+						phys5: port@5 {
+							reg = <5>;
+						};
+
+						phys6: port@6 {
+							reg = <6>;
+						};
+
+						phys7: port@7 {
+							reg = <7>;
+						};
+					};
+				};
+
+				pse-pis {
+					#address-cells = <1>;
+					#size-cells = <0>;
+
+					pse_pi0: pse-pi@0 {
+						reg = <0>;
+						#pse-cells = <0>;
+						pairset-names = "alternative-a", "alternative-b";
+						pairsets = <&phys0>, <&phys1>;
+						polarity-supported = "MDI-X", "S";
+						vpwr-supply = <&pd7718t3_0>;
+					};
+
+					pse_pi1: pse-pi@1 {
+						reg = <1>;
+						#pse-cells = <0>;
+						pairset-names = "alternative-a", "alternative-b";
+						pairsets = <&phys2>, <&phys3>;
+						polarity-supported = "MDI-X", "S";
+						vpwr-supply = <&pd7718t3_0>;
+					};
+
+					pse_pi2: pse-pi@2 {
+						reg = <2>;
+						#pse-cells = <0>;
+						pairset-names = "alternative-a", "alternative-b";
+						pairsets = <&phys4>, <&phys5>;
+						polarity-supported = "MDI-X", "S";
+						vpwr-supply = <&pd7718t3_0>;
+					};
+
+					pse_pi3: pse-pi@3 {
+						reg = <3>;
+						#pse-cells = <0>;
+						pairset-names = "alternative-a", "alternative-b";
+						pairsets = <&phys6>, <&phys7>;
+						polarity-supported = "MDI-X", "S";
+						vpwr-supply = <&pd7718t3_0>;
+					};
+				};
+			};
 		};
 	};
 
@@ -507,6 +599,8 @@
 		reg = <24>;
 		interrupts = <11 IRQ_TYPE_LEVEL_LOW>;
 		interrupt-parent = <&gpio>;
+		/* Probably incorrect after the next HW rev */
+		pses = <&pse_pi3>;
 	};
 
 	phy25: phy@25 {
@@ -514,6 +608,8 @@
 		reg = <25>;
 		interrupts = <11 IRQ_TYPE_LEVEL_LOW>;
 		interrupt-parent = <&gpio>;
+		/* Probably incorrect after the next HW rev */
+		pses = <&pse_pi2>;
 	};
 
 	phy26: phy@26 {
@@ -521,6 +617,8 @@
 		reg = <26>;
 		interrupts = <11 IRQ_TYPE_LEVEL_LOW>;
 		interrupt-parent = <&gpio>;
+		/* Probably incorrect after the next HW rev */
+		pses = <&pse_pi1>;
 	};
 
 	phy27: phy@27 {
@@ -528,6 +626,8 @@
 		reg = <27>;
 		interrupts = <11 IRQ_TYPE_LEVEL_LOW>;
 		interrupt-parent = <&gpio>;
+		/* Probably incorrect after the next HW rev */
+		pses = <&pse_pi0>;
 	};
 };
 
