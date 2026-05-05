@@ -94,6 +94,18 @@ struct pd692x0_matrix {
 	u8 hw_port_b;
 };
 
+enum pse_generation {
+	PSE_GEN_6
+};
+
+struct pd692x0_info {
+	u8 fw_maj_ver;
+	u8 fw_min_ver;
+	u8 fw_patch_ver;
+	enum pse_generation pse_generation;
+	const struct fw_upload_ops *pd_fw_ops;
+};
+
 struct pd692x0_priv {
 	struct i2c_client *client;
 	struct pse_controller_dev pcdev;
@@ -113,6 +125,8 @@ struct pd692x0_priv {
 	int manager_pw_budget[PD692X0_MAX_MANAGERS];
 	int nmanagers;
 	struct pd692x0_matrix *port_matrix;
+
+	const struct pd692x0_info *info;
 };
 
 /* Template list of communication messages. The non-null bytes defined here
@@ -1703,7 +1717,7 @@ static enum fw_upload_err pd692x0_fw_poll_complete(struct fw_upload *fwl)
 		return ret;
 
 	ver = pd692x0_get_sw_version(priv);
-	if (ver.maj_sw_ver < PD692X0_FW_MAJ_VER) {
+	if (ver.maj_sw_ver < priv->info->fw_maj_ver) {
 		dev_err(&client->dev,
 			"Too old firmware version. Please update it\n");
 		priv->fw_state = PD692X0_FW_NEED_UPDATE;
@@ -1753,6 +1767,14 @@ static const struct fw_upload_ops pd692x0_fw_ops = {
 	.cleanup = pd692x0_fw_cleanup,
 };
 
+static const struct pd692x0_info pd69200_info = {
+	.fw_maj_ver = PD692X0_FW_MAJ_VER,
+	.fw_min_ver = PD692X0_FW_MIN_VER,
+	.fw_patch_ver = PD692X0_FW_PATCH_VER,
+	.pse_generation = PSE_GEN_6,
+	.pd_fw_ops = &pd692x0_fw_ops,
+};
+
 static int pd692x0_i2c_probe(struct i2c_client *client)
 {
 	static const char * const regulators[] = { "vdd", "vdda" };
@@ -1778,6 +1800,10 @@ static int pd692x0_i2c_probe(struct i2c_client *client)
 	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
 	if (!priv)
 		return -ENOMEM;
+
+	priv->info = i2c_get_match_data(client);
+	if (!priv->info)
+		return -EINVAL;
 
 	priv->client = client;
 	i2c_set_clientdata(client, priv);
@@ -1817,7 +1843,7 @@ static int pd692x0_i2c_probe(struct i2c_client *client)
 			 ver.prod, ver.maj_sw_ver, ver.min_sw_ver,
 			 ver.pa_sw_ver);
 
-		if (ver.maj_sw_ver < PD692X0_FW_MAJ_VER) {
+		if (ver.maj_sw_ver < priv->info->fw_maj_ver) {
 			dev_err(dev, "Too old firmware version. Please update it\n");
 			priv->fw_state = PD692X0_FW_NEED_UPDATE;
 		} else {
@@ -1841,12 +1867,14 @@ static int pd692x0_i2c_probe(struct i2c_client *client)
 		return dev_err_probe(dev, ret,
 				     "failed to register PSE controller\n");
 
-	fwl = firmware_upload_register(THIS_MODULE, dev, dev_name(dev),
-				       &pd692x0_fw_ops, priv);
-	if (IS_ERR(fwl))
-		return dev_err_probe(dev, PTR_ERR(fwl),
-				     "failed to register to the Firmware Upload API\n");
-	priv->fwl = fwl;
+	if (priv->info->pd_fw_ops) {
+		fwl = firmware_upload_register(THIS_MODULE, dev, dev_name(dev),
+					       priv->info->pd_fw_ops, priv);
+		if (IS_ERR(fwl))
+			return dev_err_probe(dev, PTR_ERR(fwl),
+					     "failed to register to the Firmware Upload API\n");
+		priv->fwl = fwl;
+	}
 
 	return 0;
 }
@@ -1856,19 +1884,20 @@ static void pd692x0_i2c_remove(struct i2c_client *client)
 	struct pd692x0_priv *priv = i2c_get_clientdata(client);
 
 	pd692x0_managers_free_pw_budget(priv);
-	firmware_upload_unregister(priv->fwl);
+	if (priv->fwl)
+		firmware_upload_unregister(priv->fwl);
 }
 
 static const struct i2c_device_id pd692x0_id[] = {
-	{ .name = PD692X0_PSE_NAME },
+	{ .name = PD692X0_PSE_NAME, .driver_data = (kernel_ulong_t)&pd69200_info },
 	{ }
 };
 MODULE_DEVICE_TABLE(i2c, pd692x0_id);
 
 static const struct of_device_id pd692x0_of_match[] = {
-	{ .compatible = "microchip,pd69200", },
-	{ .compatible = "microchip,pd69210", },
-	{ .compatible = "microchip,pd69220", },
+	{ .compatible = "microchip,pd69200", .data = &pd69200_info },
+	{ .compatible = "microchip,pd69210", .data = &pd69200_info },
+	{ .compatible = "microchip,pd69220", .data = &pd69200_info },
 	{ },
 };
 MODULE_DEVICE_TABLE(of, pd692x0_of_match);
