@@ -512,6 +512,14 @@ static void sfp_quirk_ubnt_uf_instant(const struct sfp_eeprom_id *id,
 	__set_bit(PHY_INTERFACE_MODE_1000BASEX, caps->interfaces);
 }
 
+static void sfp_quirk_10g_25g_sr(const struct sfp_eeprom_id *id,
+				 struct sfp_module_caps *caps)
+{
+	linkmode_set_bit(ETHTOOL_LINK_MODE_10000baseSR_Full_BIT,
+			 caps->link_modes);
+	__set_bit(PHY_INTERFACE_MODE_10GBASER, caps->interfaces);
+}
+
 #define SFP_QUIRK(_v, _p, _s, _f) \
 	{ .vendor = _v, .part = _p, .support = _s, .fixup = _f, }
 #define SFP_QUIRK_S(_v, _p, _s) SFP_QUIRK(_v, _p, _s, NULL)
@@ -538,6 +546,10 @@ static const struct sfp_quirk sfp_quirks[] = {
 		  sfp_fixup_nokia),
 
 	SFP_QUIRK_F("BIDB", "X-ONU-SFPP", sfp_fixup_potron),
+
+	// BlueOptics BO27O856S1D-BO is dual rate 25G/10G but the 10G rate is
+	// not advertised in EEPROM.
+	SFP_QUIRK_S("BlueOptics", "BO27O856S1D-BO", sfp_quirk_10g_25g_sr),
 
 	// FLYPRO SFP-10GT-CS-30M uses Rollball protocol to talk to the PHY.
 	SFP_QUIRK_F("FLYPRO", "SFP-10GT-CS-30M", sfp_fixup_rollball),
