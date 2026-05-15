@@ -520,9 +520,10 @@ static const struct sfp_quirk sfp_quirks[] = {
 
 	SFP_QUIRK_F("BIDB", "X-ONU-SFPP", sfp_fixup_potron),
 
-	// BlueOptics BO27O856S1D-BO is dual rate 25G/10G but the 10G rate is
-	// not advertised in EEPROM.
+	// BlueOptics BO27O856S1D-BO and DELL M14MK are dual rate 25G/10G but
+	// the 10G rate is not advertised in EEPROM.
 	SFP_QUIRK_S("BlueOptics", "BO27O856S1D-BO", sfp_quirk_10g_25g_sr),
+	SFP_QUIRK_S("DELL EMC", "M14MK", sfp_quirk_10g_25g_sr),
 
 	// FLYPRO SFP-10GT-CS-30M uses Rollball protocol to talk to the PHY.
 	SFP_QUIRK_F("FLYPRO", "SFP-10GT-CS-30M", sfp_fixup_rollball),
