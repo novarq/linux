@@ -459,6 +459,21 @@ static struct pd692x0_priv *to_pd692x0_priv(struct pse_controller_dev *pcdev)
 	return container_of(pcdev, struct pd692x0_priv, pcdev);
 }
 
+static struct pd692x0_msg
+pd692x0_msg_template(struct pd692x0_priv *priv, int id)
+{
+	struct pd692x0_msg msg = pd692x0_msg_template_list[id];
+
+	if (id == PD692X0_MSG_SET_PORT_PARAM &&
+	    priv->info->pse_generation == PSE_GEN_7) {
+		msg.data[3] = 0x4e;
+		msg.data[4] = 0xff;
+		msg.data[5] = 0xff;
+	}
+
+	return msg;
+}
+
 static int pd692x0_fw_unavailable(struct pd692x0_priv *priv)
 {
 	switch (priv->fw_state) {
@@ -491,7 +506,7 @@ static int pd692x0_pi_enable(struct pse_controller_dev *pcdev, int id)
 	if (priv->admin_state[id] == ETHTOOL_C33_PSE_ADMIN_STATE_ENABLED)
 		return 0;
 
-	msg = pd692x0_msg_template_list[PD692X0_MSG_SET_PORT_PARAM];
+	msg = pd692x0_msg_template(priv, PD692X0_MSG_SET_PORT_PARAM);
 	msg.data[0] = 0x1;
 	msg.sub[2] = id;
 	ret = pd692x0_sendrecv_msg(priv, &msg, &buf);
@@ -516,7 +531,7 @@ static int pd692x0_pi_disable(struct pse_controller_dev *pcdev, int id)
 	if (priv->admin_state[id] == ETHTOOL_C33_PSE_ADMIN_STATE_DISABLED)
 		return 0;
 
-	msg = pd692x0_msg_template_list[PD692X0_MSG_SET_PORT_PARAM];
+	msg = pd692x0_msg_template(priv, PD692X0_MSG_SET_PORT_PARAM);
 	msg.data[0] = 0x0;
 	msg.sub[2] = id;
 	ret = pd692x0_sendrecv_msg(priv, &msg, &buf);
@@ -657,7 +672,8 @@ static int pd692x0_pi_get_pw_from_table(int op_mode, int added_pw)
 }
 
 static int pd692x0_pi_set_pw_from_table(struct device *dev,
-					struct pd692x0_msg *msg, int pw)
+					struct pd692x0_msg *msg, int pw,
+					bool exact)
 {
 	const struct pd692x0_class_pw *pw_table;
 	int i;
@@ -673,6 +689,11 @@ static int pd692x0_pi_set_pw_from_table(struct device *dev,
 	}
 
 	for (i = 0; i < PD692X0_CLASS_PW_TABLE_SIZE; i++, pw_table++) {
+		if (exact && pw <= pw_table->class_pw) {
+			msg->data[2] = pw_table->class_cfg_value;
+			return 0;
+		}
+
 		if (pw > (pw_table->class_pw + pw_table->max_added_class_pw))
 			continue;
 
@@ -697,7 +718,8 @@ static int pd692x0_pi_set_pw_from_table(struct device *dev,
 		 "Power limit %dmW not supported. Set to highest power limit %dmW\n",
 		 pw, pw_table->class_pw + pw_table->max_added_class_pw);
 	msg->data[2] = pw_table->class_cfg_value;
-	msg->data[3] = pw_table->max_added_class_pw / 100;
+	if (!exact)
+		msg->data[3] = pw_table->max_added_class_pw / 100;
 	return 0;
 }
 
@@ -1469,9 +1491,10 @@ static int pd692x0_pi_set_pw_limit(struct pse_controller_dev *pcdev,
 	if (ret)
 		return ret;
 
-	msg = pd692x0_msg_template_list[PD692X0_MSG_SET_PORT_PARAM];
+	msg = pd692x0_msg_template(priv, PD692X0_MSG_SET_PORT_PARAM);
 	msg.sub[2] = id;
-	ret = pd692x0_pi_set_pw_from_table(dev, &msg, max_mW);
+	ret = pd692x0_pi_set_pw_from_table(dev, &msg, max_mW,
+					   priv->info->pse_generation == PSE_GEN_7);
 	if (ret)
 		return ret;
 
@@ -1489,7 +1512,7 @@ static int pd692x0_pi_set_prio(struct pse_controller_dev *pcdev, int id,
 	if (ret)
 		return ret;
 
-	msg = pd692x0_msg_template_list[PD692X0_MSG_SET_PORT_PARAM];
+	msg = pd692x0_msg_template(priv, PD692X0_MSG_SET_PORT_PARAM);
 	msg.sub[2] = id;
 	/* Controller priority from 1 to 3 */
 	msg.data[4] = prio + 1;
