@@ -893,6 +893,43 @@ static struct pd692x0_msg_ver pd692x0_get_sw_version(struct pd692x0_priv *priv)
 	return ver;
 }
 
+static int pd692x0_check_controller_status(struct pd692x0_priv *priv,
+					   const struct pd692x0_msg *status)
+{
+	struct device *dev = &priv->client->dev;
+
+	if (status->key != PD692X0_KEY_TLM) {
+		dev_err(dev, "PSE controller error\n");
+		return -EIO;
+	}
+
+	if (priv->info->pse_generation == PSE_GEN_7) {
+		if (status->sub[0] == PD77010_CPU_STATUS_APP)
+			return 0;
+
+		if (status->sub[0] == PD77010_CPU_STATUS_BOOT) {
+			dev_err(dev, "PSE firmware error. Please update it.\n");
+			priv->fw_state = PD692X0_FW_BROKEN;
+			return 0;
+		}
+
+		dev_err(dev, "PSE controller error\n");
+		return -EIO;
+	}
+
+	if (status->sub[0] & 0x01) {
+		dev_err(dev, "PSE controller error\n");
+		return -EIO;
+	}
+
+	if (status->sub[0] & 0x02) {
+		dev_err(dev, "PSE firmware error. Please update it.\n");
+		priv->fw_state = PD692X0_FW_BROKEN;
+	}
+
+	return 0;
+}
+
 struct pd692x0_manager {
 	struct device_node *port_node[PD692X0_MAX_MANAGER_PORTS];
 	struct device_node *node;
@@ -2291,14 +2328,11 @@ static int pd692x0_i2c_probe(struct i2c_client *client)
 		}
 	}
 
-	if (buf.key != 0x03 || buf.sub[0] & 0x01) {
-		dev_err(dev, "PSE controller error\n");
-		return -EIO;
-	}
-	if (buf.sub[0] & 0x02) {
-		dev_err(dev, "PSE firmware error. Please update it.\n");
-		priv->fw_state = PD692X0_FW_BROKEN;
-	} else {
+	ret = pd692x0_check_controller_status(priv, &buf);
+	if (ret)
+		return ret;
+
+	if (priv->fw_state != PD692X0_FW_BROKEN) {
 		ver = pd692x0_get_sw_version(priv);
 		dev_info(&client->dev, "Software version %d.%02d.%d.%d\n",
 			 ver.prod, ver.maj_sw_ver, ver.min_sw_ver,
