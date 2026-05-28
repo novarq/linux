@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 
 #include <linux/etherdevice.h>
 #include <linux/nvmem-consumer.h>
@@ -16,14 +17,26 @@ struct mfg_otp_fields {
 #define OTP_TAG_ENTRY_LENGTH	8
 #define OTP_TAG_VAL_LENGTH	6
 
-#define OTP_TAG_GET_SIZE(tag) ((0xff & (uint16_t)tag[7]) / 32)
-#define OTP_TAG_GET_TAG(tag)  ((((uint16_t)tag[7]) & 0x4) | tag[6])
-
-static bool otp_tag_valid(char *tag_raw)
+static u8 otp_tag_get_size(const u8 *tag)
 {
-	uint8_t size;
+	return tag[7] / 32;
+}
 
-	size = OTP_TAG_GET_SIZE(tag_raw);
+static u8 otp_tag_get_cont(const u8 *tag)
+{
+	return (tag[7] / 16) & 0x1;
+}
+
+static u8 otp_tag_get_tag(const u8 *tag)
+{
+	return (tag[7] & 0x4) | tag[6];
+}
+
+static bool otp_tag_valid(const u8 *tag_raw)
+{
+	u8 size;
+
+	size = otp_tag_get_size(tag_raw);
 	if (size != 0 && size != 7)
 		return true;
 
@@ -43,9 +56,9 @@ static const char *microchip_tag_cell_name(u8 type)
 		return "base-mac-address";
 	case 5:
 		return "mac-address-count";
-	case 7:
+	case 6:
 		return "fit-config";
-	case 8:
+	case 7:
 		return "pcb2";
 	default:
 		break;
@@ -54,25 +67,66 @@ static const char *microchip_tag_cell_name(u8 type)
 	return NULL;
 }
 
-static int microchip_mac_read_cb(void *priv, const char *id, int index,
+static int microchip_tag_read_cb(void *priv, const char *id, int index,
 				 unsigned int offset, void *buf,
 				 size_t bytes)
 {
-	eth_addr_add(buf, index);
+	u8 tag_type = (uintptr_t)priv;
+	u8 *src = buf;
+	u8 *dst = buf;
+	size_t pos;
+	int i;
+
+	for (pos = 0; pos < bytes; pos += OTP_TAG_ENTRY_LENGTH) {
+		u8 size = otp_tag_get_size(src + pos);
+
+		memmove(dst, src + pos, size);
+		dst += size;
+	}
+
+	if (tag_type == 4) {
+		for (i = 0; i < ETH_ALEN / 2; i++)
+			swap(src[i], src[ETH_ALEN - 1 - i]);
+
+		eth_addr_add(buf, index);
+	}
 
 	return 0;
 }
 
-static nvmem_cell_post_process_t microchip_tag_read_cb(u8 type, u8 *buf)
+static int microchip_tag_parse(struct device *dev, u8 *data, size_t dev_size,
+			       unsigned int offset, unsigned int *raw_len,
+			       unsigned int *bytes)
 {
-	switch (type) {
-	case 4:
-		return &microchip_mac_read_cb;
-	default:
-		break;
-	}
+	u8 *tag_raw = data + offset;
+	u8 tag_type = otp_tag_get_tag(tag_raw);
+	u8 size;
 
-	return NULL;
+	*raw_len = 0;
+	*bytes = 0;
+
+	do {
+		size = otp_tag_get_size(tag_raw);
+		*raw_len += OTP_TAG_ENTRY_LENGTH;
+		*bytes += size;
+
+		if (!otp_tag_get_cont(tag_raw))
+			return 0;
+
+		offset += OTP_TAG_ENTRY_LENGTH;
+		if (offset > dev_size - OTP_TAG_ENTRY_LENGTH) {
+			dev_warn(dev, "Ignoring truncated tag at 0x%x\n", offset);
+			return -EINVAL;
+		}
+
+		tag_raw = data + offset;
+		if (!otp_tag_valid(tag_raw) ||
+		    otp_tag_get_tag(tag_raw) != tag_type) {
+			dev_warn(dev, "Ignoring malformed continuation tag at 0x%x\n",
+				 offset);
+			return -EINVAL;
+		}
+	} while (true);
 }
 
 static const struct nvmem_cell_info microchip_otp_entries[] = {
@@ -102,7 +156,7 @@ static int microchip_add_static_cells(struct nvmem_layout *layout)
 	int ret, i;
 
 	layout_np = of_nvmem_layout_get_container(nvmem);
-	if (!layout)
+	if (!layout_np)
 		return -ENOENT;
 
 	/* First register fixed fields */
@@ -131,10 +185,13 @@ static int microchip_add_tag_cells(struct nvmem_layout *layout)
 {
 	struct nvmem_device *nvmem = layout->nvmem;
 	unsigned int offset = OTP_TAG_OFFSET;
-	char tag_raw[OTP_TAG_ENTRY_LENGTH];
+	u8 tag_raw[OTP_TAG_ENTRY_LENGTH];
 	struct device *dev = &layout->dev;
 	struct nvmem_cell_info cell = {0};
 	struct device_node *layout_np;
+	unsigned int raw_len;
+	unsigned int bytes;
+	u8 tag_type;
 	size_t dev_size;
 	u8 *data;
 	int ret;
@@ -145,33 +202,52 @@ static int microchip_add_tag_cells(struct nvmem_layout *layout)
 
 	dev_size = nvmem_dev_size(nvmem);
 	data = devm_kmalloc(dev, dev_size, GFP_KERNEL);
-	if (!data)
+	if (!data) {
+		of_node_put(layout_np);
 		return -ENOMEM;
+	}
 
 	ret = nvmem_device_read(nvmem, 0, dev_size, data);
-	if (ret != dev_size)
+	if (ret < 0) {
+		of_node_put(layout_np);
 		return ret;
+	} else if (ret != dev_size) {
+		of_node_put(layout_np);
+		return -EIO;
+	}
 
-	while (offset < dev_size) {
-		memcpy(&tag_raw, data + offset, sizeof(tag_raw));
+	while (offset + OTP_TAG_ENTRY_LENGTH <= dev_size) {
+		memcpy(tag_raw, data + offset, sizeof(tag_raw));
 
 		if (otp_tag_valid(tag_raw)) {
-			cell.name = microchip_tag_cell_name(OTP_TAG_GET_TAG(tag_raw));
+			tag_type = otp_tag_get_tag(tag_raw);
+			cell.name = microchip_tag_cell_name(tag_type);
 			if (!cell.name)
-				continue;
+				goto next;
+
+			ret = microchip_tag_parse(dev, data, dev_size, offset,
+						  &raw_len, &bytes);
+			if (ret)
+				goto next;
 
 			cell.offset = offset;
-			cell.bytes = OTP_TAG_GET_SIZE(tag_raw);
+			cell.raw_len = raw_len;
+			cell.bytes = bytes;
 			cell.np = of_get_child_by_name(layout_np, cell.name);
-			cell.read_post_process = microchip_tag_read_cb(OTP_TAG_GET_TAG(tag_raw), tag_raw);
+			cell.read_post_process = microchip_tag_read_cb;
+			cell.priv = (void *)(uintptr_t)tag_type;
 
 			ret = nvmem_add_one_cell(nvmem, &cell);
 			if (ret) {
 				of_node_put(layout_np);
 				return ret;
 			}
+
+			offset += raw_len;
+			continue;
 		}
 
+next:
 		offset += OTP_TAG_ENTRY_LENGTH;
 	}
 
