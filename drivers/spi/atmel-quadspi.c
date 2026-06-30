@@ -258,8 +258,11 @@ static const struct atmel_qspi_pcal pcal[ATMEL_QSPI_PCAL_ARRAY_SIZE] = {
 	{200000000, 7},
 };
 
+struct atmel_qspi;
+
 struct atmel_qspi_caps {
 	u32 max_speed_hz;
+	int (*init)(struct atmel_qspi *aq);
 	bool has_qspick;
 	bool has_gclk;
 	bool has_ricr;
@@ -268,7 +271,6 @@ struct atmel_qspi_caps {
 	bool has_2xgclk;
 	bool has_padcalib;
 	bool has_dllon;
-	bool has_lan969x;
 };
 
 struct atmel_qspi_ops;
@@ -1214,8 +1216,8 @@ static int atmel_qspi_sama7g5_setup(struct spi_device *spi)
 	/* The controller can communicate with a single peripheral device (target). */
 	aq->target_max_speed_hz = spi->max_speed_hz;
 
-	if (aq->caps->has_lan969x)
-		return atmel_qspi_lan969x_init(aq);
+	if (aq->caps->init)
+		return aq->caps->init(aq);
 
 	return atmel_qspi_sama7g5_init(aq);
 }
@@ -1734,11 +1736,11 @@ static const struct atmel_qspi_caps atmel_sama7g5_qspi_caps = {
 
 static const struct atmel_qspi_caps atmel_lan969x_qspi_caps = {
 	.max_speed_hz = SAM9X7_QSPI_MAX_SPEED_HZ,
+	.init = atmel_qspi_lan969x_init,
 	.has_gclk = true,
 	.has_dma = true,
 	.has_padcalib = true,
 	.has_dllon = true,
-	.has_lan969x = true,
 };
 
 static const struct of_device_id atmel_qspi_dt_ids[] = {
