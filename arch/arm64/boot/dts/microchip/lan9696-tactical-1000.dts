@@ -1112,6 +1112,7 @@
 			phy-mode = "qsgmii";
 			phys = <&serdes 0>;
 			microchip,bandwidth = <1000>;
+			label = "lan4";
 		};
 
 		port1: port@1 {
@@ -1120,6 +1121,7 @@
 			phy-mode = "qsgmii";
 			phys = <&serdes 0>;
 			microchip,bandwidth = <1000>;
+			label = "lan3";
 		};
 
 		port2: port@2 {
@@ -1128,6 +1130,7 @@
 			phy-mode = "qsgmii";
 			phys = <&serdes 0>;
 			microchip,bandwidth = <1000>;
+			label = "lan2";
 		};
 
 		port3: port@3 {
@@ -1136,6 +1139,7 @@
 			phy-mode = "qsgmii";
 			phys = <&serdes 0>;
 			microchip,bandwidth = <1000>;
+			label = "lan1";
 		};
 
 		port4: port@4 {
@@ -1144,6 +1148,7 @@
 			phy-mode = "qsgmii";
 			phys = <&serdes 1>;
 			microchip,bandwidth = <1000>;
+			label = "lan8";
 		};
 
 		port5: port@5 {
@@ -1152,6 +1157,7 @@
 			phy-mode = "qsgmii";
 			phys = <&serdes 1>;
 			microchip,bandwidth = <1000>;
+			label = "lan7";
 		};
 
 		port6: port@6 {
@@ -1160,6 +1166,7 @@
 			phy-mode = "qsgmii";
 			phys = <&serdes 1>;
 			microchip,bandwidth = <1000>;
+			label = "lan6";
 		};
 
 		port7: port@7 {
@@ -1168,6 +1175,7 @@
 			phy-mode = "qsgmii";
 			phys = <&serdes 1>;
 			microchip,bandwidth = <1000>;
+			label = "lan5";
 		};
 
 		port8: port@8 {
@@ -1176,6 +1184,7 @@
 			phy-mode = "qsgmii";
 			phys = <&serdes 2>;
 			microchip,bandwidth = <1000>;
+			label = "lan12";
 		};
 
 		port9: port@9 {
@@ -1184,6 +1193,7 @@
 			phy-mode = "qsgmii";
 			phys = <&serdes 2>;
 			microchip,bandwidth = <1000>;
+			label = "lan11";
 		};
 
 		port10: port@10 {
@@ -1192,6 +1202,7 @@
 			phy-mode = "qsgmii";
 			phys = <&serdes 2>;
 			microchip,bandwidth = <1000>;
+			label = "lan10";
 		};
 
 		port11: port@11 {
@@ -1200,6 +1211,7 @@
 			phy-mode = "qsgmii";
 			phys = <&serdes 2>;
 			microchip,bandwidth = <1000>;
+			label = "lan9";
 		};
 
 		port12: port@12 {
@@ -1208,6 +1220,7 @@
 			phy-mode = "qsgmii";
 			phys = <&serdes 3>;
 			microchip,bandwidth = <1000>;
+			label = "lan16";
 		};
 
 		port13: port@13 {
@@ -1216,6 +1229,7 @@
 			phy-mode = "qsgmii";
 			phys = <&serdes 3>;
 			microchip,bandwidth = <1000>;
+			label = "lan15";
 		};
 
 		port14: port@14 {
@@ -1224,6 +1238,7 @@
 			phy-mode = "qsgmii";
 			phys = <&serdes 3>;
 			microchip,bandwidth = <1000>;
+			label = "lan14";
 		};
 
 		port15: port@15 {
@@ -1232,6 +1247,7 @@
 			phy-mode = "qsgmii";
 			phys = <&serdes 3>;
 			microchip,bandwidth = <1000>;
+			label = "lan13";
 		};
 
 		port16: port@16 {
@@ -1240,6 +1256,7 @@
 			phy-mode = "qsgmii";
 			phys = <&serdes 4>;
 			microchip,bandwidth = <1000>;
+			label = "lan20";
 		};
 
 		port17: port@17 {
@@ -1248,6 +1265,7 @@
 			phy-mode = "qsgmii";
 			phys = <&serdes 4>;
 			microchip,bandwidth = <1000>;
+			label = "lan19";
 		};
 
 		port18: port@18 {
@@ -1256,6 +1274,7 @@
 			phy-mode = "qsgmii";
 			phys = <&serdes 4>;
 			microchip,bandwidth = <1000>;
+			label = "lan18";
 		};
 
 		port19: port@19 {
@@ -1264,6 +1283,7 @@
 			phy-mode = "qsgmii";
 			phys = <&serdes 4>;
 			microchip,bandwidth = <1000>;
+			label = "lan17";
 		};
 
 		port20: port@20 {
@@ -1272,6 +1292,7 @@
 			phy-mode = "qsgmii";
 			phys = <&serdes 5>;
 			microchip,bandwidth = <1000>;
+			label = "lan24";
 		};
 
 		port21: port@21 {
@@ -1280,6 +1301,7 @@
 			phy-mode = "qsgmii";
 			phys = <&serdes 5>;
 			microchip,bandwidth = <1000>;
+			label = "lan23";
 		};
 
 		port22: port@22 {
@@ -1288,6 +1310,7 @@
 			phy-mode = "qsgmii";
 			phys = <&serdes 5>;
 			microchip,bandwidth = <1000>;
+			label = "lan22";
 		};
 
 		port23: port@23 {
@@ -1296,6 +1319,7 @@
 			phy-mode = "qsgmii";
 			phys = <&serdes 5>;
 			microchip,bandwidth = <1000>;
+			label = "lan21";
 		};
 
 		port24: port@24 {
@@ -1306,6 +1330,7 @@
 			managed = "in-band-status";
 			microchip,bandwidth = <10000>;
 			microchip,sd-sgpio = <24>;
+			label = "sfp1";
 		};
 
 		port25: port@25 {
@@ -1316,6 +1341,7 @@
 			managed = "in-band-status";
 			microchip,bandwidth = <10000>;
 			microchip,sd-sgpio = <28>;
+			label = "sfp2";
 		};
 
 		port26: port@26 {
@@ -1326,6 +1352,7 @@
 			managed = "in-band-status";
 			microchip,bandwidth = <10000>;
 			microchip,sd-sgpio = <32>;
+			label = "sfp3";
 		};
 
 		port27: port@27 {
@@ -1336,6 +1363,7 @@
 			managed = "in-band-status";
 			microchip,bandwidth = <10000>;
 			microchip,sd-sgpio = <36>;
+			label = "sfp4";
 		};
 
 		port29: port@29 {
@@ -1344,6 +1372,7 @@
 			phy-handle = <&phy3>;
 			phy-mode = "rgmii-id";
 			microchip,bandwidth = <1000>;
+			label = "mgmt";
 		};
 	};
 };
