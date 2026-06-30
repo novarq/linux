@@ -316,6 +316,7 @@ static int sparx5_create_port(struct sparx5 *sparx5,
 	const struct sparx5_ops *ops;
 	struct net_device *ndev;
 	struct phylink *phylink;
+	const char *name;
 	int err;
 
 	ops = sparx5->data->ops;
@@ -396,6 +397,12 @@ static int sparx5_create_port(struct sparx5 *sparx5,
 	spx5_port->phylink = phylink;
 
 	spx5_port->ndev->dev.of_node = spx5_port->of_node;
+
+	/* Non upstreamable way of setting predictable names based of DT */
+	if (!of_property_read_string(config->node, "label", &name)) {
+		strscpy(spx5_port->ndev->name, name, IFNAMSIZ);
+		spx5_port->ndev->name_assign_type = NET_NAME_PREDICTABLE;
+	}
 
 	return 0;
 }
