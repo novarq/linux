@@ -1735,6 +1735,7 @@ static const struct atmel_qspi_caps atmel_sama7g5_qspi_caps = {
 static const struct atmel_qspi_caps atmel_lan969x_qspi_caps = {
 	.max_speed_hz = SAM9X7_QSPI_MAX_SPEED_HZ,
 	.has_gclk = true,
+	.has_dma = true,
 	.has_padcalib = true,
 	.has_dllon = true,
 	.has_lan969x = true,
