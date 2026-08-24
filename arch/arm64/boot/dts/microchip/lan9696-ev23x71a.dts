@@ -476,6 +476,18 @@
 	};
 };
 
+&sdmmc0 {
+	pinctrl-0 = <&emmc_sd_pins>;
+	pinctrl-names = "default";
+	bus-width = <8>;
+	mmc-ddr-1_8v;
+	non-removable;
+	no-sd;
+	no-sdio;
+	disable-wp;
+	status = "okay";
+};
+
 &serdes {
 	status = "okay";
 };
