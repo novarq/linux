@@ -5,6 +5,7 @@
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/input/input.h>
 #include <dt-bindings/leds/common.h>
+#include <dt-bindings/pwm/pwm.h>
 #include "lan9691.dtsi"
 
 / {
@@ -17,19 +18,6 @@
 
 	chosen {
 		stdout-path = "serial0:115200n8";
-	};
-
-	cpu_gpio_pwm: pwm {
-		compatible = "pwm-gpio";
-		gpios = <&gpio 25 GPIO_ACTIVE_LOW>;
-		#pwm-cells = <3>;
-	};
-
-	cpu_fan: cpu-pwm-fan {
-		compatible = "pwm-fan";
-		pinctrl-names = "default";
-		pinctrl-0 = <&fan_pins>;
-		pwms = <&cpu_gpio_pwm 0 40000 0>;
 	};
 
 	case_fan: case-gpio-fan {
@@ -716,7 +704,7 @@
 
 	fan_pins: fan-pins {
 		pins = "GPIO_25", "GPIO_26";
-		function = "gpio";
+		function = "fan";
 	};
 
 	fc0_pins: fc0-pins {
@@ -1335,6 +1323,15 @@
 			microchip,bandwidth = <1000>;
 			label = "mgmt";
 		};
+	};
+};
+
+&tmon {
+	pinctrl-0 = <&fan_pins>;
+	pinctrl-names = "default";
+
+	fan {
+		pwms = <&tmon 40000 PWM_POLARITY_INVERTED>;
 	};
 };
 
