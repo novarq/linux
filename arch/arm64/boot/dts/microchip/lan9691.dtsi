@@ -523,9 +523,11 @@
 		};
 
 		tmon: hwmon@e2020100 {
-			compatible = "microchip,lan9691-temp", "microchip,sparx5-temp";
-			reg = <0xe2020100 0xc>;
+			compatible = "microchip,lan9691-hwmon", "microchip,sparx5-temp";
+			reg = <0xe2020100 0xc>, <0xe2010348 0xc>;
+			reg-names = "temp", "fan";
 			clocks = <&fx100_clk>;
+			#pwm-cells = <2>;
 			#thermal-sensor-cells = <0>;
 		};
 
