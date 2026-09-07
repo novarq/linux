@@ -681,6 +681,57 @@
 		/* RS1 is internally tied to RS0 */
 		rate-select0-gpios = <&sgpio_out 9 3 GPIO_ACTIVE_HIGH>;
 	};
+
+	thermal-zones {
+		soc-thermal {
+			polling-delay-passive = <1000>;
+			polling-delay = <2000>;
+			thermal-sensors = <&tmon>;
+
+			trips {
+				fan_low_trip: fan-low-trip {
+					temperature = <60000>;
+					hysteresis = <5000>;
+					type = "active";
+				};
+
+				fan_mid_trip: fan-mid-trip {
+					temperature = <70000>;
+					hysteresis = <5000>;
+					type = "active";
+				};
+
+				fan_high_trip: fan-high-trip {
+					temperature = <80000>;
+					hysteresis = <5000>;
+					type = "active";
+				};
+
+				critical_trip: critical-trip {
+					temperature = <105000>;
+					hysteresis = <5000>;
+					type = "critical";
+				};
+			};
+
+			cooling-maps {
+				map0 {
+					trip = <&fan_low_trip>;
+					cooling-device = <&soc_fan 1 1>;
+				};
+
+				map1 {
+					trip = <&fan_mid_trip>;
+					cooling-device = <&soc_fan 2 2>;
+				};
+
+				map2 {
+					trip = <&fan_high_trip>;
+					cooling-device = <&soc_fan 3 3>;
+				};
+			};
+		};
+	};
 };
 
 &gpio {
@@ -1330,8 +1381,10 @@
 	pinctrl-0 = <&fan_pins>;
 	pinctrl-names = "default";
 
-	fan {
+	soc_fan: fan {
 		pwms = <&tmon 40000 PWM_POLARITY_INVERTED>;
+		cooling-levels = <0 128 192 255>;
+		#cooling-cells = <2>;
 	};
 };
 
