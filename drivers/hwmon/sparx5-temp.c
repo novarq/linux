@@ -498,7 +498,7 @@ static int s5_temp_probe(struct platform_device *pdev)
 		return PTR_ERR(hwmon_dev);
 
 	if (IS_ENABLED(CONFIG_THERMAL) && hwmon->cooling_levels) {
-		cdev = devm_thermal_of_child_cooling_device_register(dev, fan_np,
+		cdev = devm_thermal_of_cooling_device_register(dev, fan_np,
 								     "lan969x-fan", hwmon,
 								     &s5_cooling_ops);
 		if (IS_ERR(cdev))
