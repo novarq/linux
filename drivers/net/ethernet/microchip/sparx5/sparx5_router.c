@@ -735,7 +735,7 @@ sparx5_rr_neigh_entry_alloc(struct sparx5 *sparx5,
 
 	switch (key->iaddr.version) {
 	case SPARX5_IPV4:
-		entry->neigh_tbl = &arp_tbl;
+		entry->neigh_tbl = arp_table(dev_net(key->dev));
 		break;
 	case SPARX5_IPV6:
 #if IS_ENABLED(CONFIG_IPV6)
@@ -886,11 +886,15 @@ static int sparx5_rr_nexthop_init(struct sparx5 *sparx5,
 	if (!nh->gateway)
 		return 0;
 
+	/* Blackhole route nexthops have no egress device. */
+	if (!fnhc->nhc_dev)
+		return 0;
+
 	switch (fnhc->nhc_gw_family) {
 	case AF_INET:
 		nh->gw_addr.version = SPARX5_IPV4;
 		nh->gw_addr.ipv4 = fnhc->nhc_gw.ipv4;
-		nh->neigh_tbl = &arp_tbl;
+		nh->neigh_tbl = arp_table(dev_net(fnhc->nhc_dev));
 		break;
 	case AF_INET6:
 		nh->gw_addr.version = SPARX5_IPV6;
@@ -905,10 +909,6 @@ static int sparx5_rr_nexthop_init(struct sparx5 *sparx5,
 		WARN_ON_ONCE(1); /* BUG */
 		return 0;
 	}
-
-	/* Blackhole route nexthops have no egress device. */
-	if (!fnhc->nhc_dev)
-		return 0;
 
 	nh->ifindex = fnhc->nhc_dev->ifindex;
 
