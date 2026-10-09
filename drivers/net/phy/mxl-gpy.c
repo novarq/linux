@@ -1062,8 +1062,7 @@ static int gpy_led_brightness_set(struct phy_device *phydev,
 
 	/* clear HWCONTROL and set manual LED state */
 	ret = phy_modify(phydev, PHY_LED,
-			 ((value == LED_OFF) ? PHY_LED_HWCONTROL(index) : 0) |
-			 PHY_LED_ON(index),
+			 PHY_LED_HWCONTROL(index) | PHY_LED_ON(index),
 			 (value == LED_OFF) ? 0 : PHY_LED_ON(index));
 	if (ret)
 		return ret;
