@@ -72,6 +72,7 @@
 				 PHY_IMASK_ANC)
 
 #define GPY_MAX_LEDS		4
+#define MXL86211C_MAX_LEDS	3
 #define PHY_LED_POLARITY(idx)	BIT(12 + (idx))
 #define PHY_LED_HWCONTROL(idx)	BIT(8 + (idx))
 #define PHY_LED_ON(idx)		BIT(idx)
@@ -1178,6 +1179,42 @@ static int gpy_led_polarity_set(struct phy_device *phydev, int index,
 	return -EINVAL;
 }
 
+static int mxl86211c_led_brightness_set(struct phy_device *phydev,
+					u8 index, enum led_brightness value)
+{
+	if (index >= MXL86211C_MAX_LEDS)
+		return -EINVAL;
+
+	return gpy_led_brightness_set(phydev, index, value);
+}
+
+static int mxl86211c_led_hw_is_supported(struct phy_device *phydev,
+					 u8 index, unsigned long rules)
+{
+	if (index >= MXL86211C_MAX_LEDS)
+		return -EINVAL;
+
+	return gpy_led_hw_is_supported(phydev, index, rules);
+}
+
+static int mxl86211c_led_hw_control_get(struct phy_device *phydev,
+					u8 index, unsigned long *rules)
+{
+	if (index >= MXL86211C_MAX_LEDS)
+		return -EINVAL;
+
+	return gpy_led_hw_control_get(phydev, index, rules);
+}
+
+static int mxl86211c_led_hw_control_set(struct phy_device *phydev,
+					u8 index, unsigned long rules)
+{
+	if (index >= MXL86211C_MAX_LEDS)
+		return -EINVAL;
+
+	return gpy_led_hw_control_set(phydev, index, rules);
+}
+
 static unsigned int gpy_inband_caps(struct phy_device *phydev,
 				    phy_interface_t interface)
 {
@@ -1243,11 +1280,10 @@ static struct phy_driver gpy_drivers[] = {
 		.set_wol	= gpy_set_wol,
 		.get_wol	= gpy_get_wol,
 		.set_loopback	= gpy_loopback,
-		.led_brightness_set = gpy_led_brightness_set,
-		.led_hw_is_supported = gpy_led_hw_is_supported,
-		.led_hw_control_get = gpy_led_hw_control_get,
-		.led_hw_control_set = gpy_led_hw_control_set,
-		.led_polarity_set = gpy_led_polarity_set,
+		.led_brightness_set = mxl86211c_led_brightness_set,
+		.led_hw_is_supported = mxl86211c_led_hw_is_supported,
+		.led_hw_control_get = mxl86211c_led_hw_control_get,
+		.led_hw_control_set = mxl86211c_led_hw_control_set,
 		.update_stats	= gpy_update_stats,
 		.get_phy_stats	= gpy_get_phy_stats,
 	},
