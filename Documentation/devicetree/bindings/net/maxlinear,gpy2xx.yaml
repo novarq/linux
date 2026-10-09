@@ -20,6 +20,8 @@ select:
         - compatible
     - required:
         - maxlinear,use-broken-interrupts
+    - required:
+        - maxlinear,lane-asp-map
 
 allOf:
   - $ref: ethernet-phy.yaml#
@@ -34,12 +36,28 @@ allOf:
     then:
       properties:
         vddp-supply: false
+        maxlinear,lane-asp-map: false
 
 properties:
   vddp-supply:
     description: |
       Optional regulator supplying the VDDP pin. Its voltage configures the
       MDIO, MDC, and MDINT pad voltage and must be either 1.8 V or 3.3 V.
+
+  maxlinear,lane-asp-map:
+    description: |
+      Mapping of physical TPI lanes A through D to analog front ends (ASPs)
+      A through D. The array index identifies the physical TPI lane, while
+      its value identifies the analog front end, encoded as 0 through 3.
+      Each analog front end must be mapped exactly once. Omit the property to
+      retain the hardware reset mapping.
+    $ref: /schemas/types.yaml#/definitions/uint32-array
+    minItems: 4
+    maxItems: 4
+    uniqueItems: true
+    items:
+      minimum: 0
+      maximum: 3
 
   maxlinear,use-broken-interrupts:
     description: |
@@ -89,6 +107,9 @@ examples:
                          "ethernet-phy-ieee802.3-c45";
             reg = <0>;
             vddp-supply = <&vddp>;
+
+            /* Swap physical TPI lanes C and D. */
+            maxlinear,lane-asp-map = <0 1 3 2>;
 
         };
     };
