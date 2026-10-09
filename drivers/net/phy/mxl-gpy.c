@@ -114,6 +114,7 @@
 /* Packet Manager Control */
 #define VSPEC1_PM_CTRL		0x0c
 #define VSPEC1_PM_CTRL_MDIO_VOL	BIT(14)
+#define VSPEC1_PM_CTRL_SI	BIT(12)		/* Super Isolate */
 
 /* Temperature sensor */
 #define VSPEC1_TEMP_STA	0x0E
@@ -427,6 +428,30 @@ static void mxl86211c_disable_vddp(void *data)
 	regulator_disable(data);
 }
 
+static int mxl86211c_release_super_isolate(struct phy_device *phydev)
+{
+	return phy_modify_mmd(phydev, MDIO_MMD_VEND1, VSPEC1_PM_CTRL,
+			      VSPEC1_PM_CTRL_SI, 0);
+}
+
+static int mxl86211c_config_init(struct phy_device *phydev)
+{
+	struct gpy_priv *priv = phydev->priv;
+	int ret;
+
+	if (priv->vddp) {
+		ret = mxl86211c_configure_mdio_voltage(phydev, priv->vddp);
+		if (ret)
+			return ret;
+	}
+
+	ret = mxl86211c_release_super_isolate(phydev);
+	if (ret)
+		return ret;
+
+	return gpy21x_config_init(phydev);
+}
+
 static int mxl86211c_probe(struct phy_device *phydev)
 {
 	struct device *dev = &phydev->mdio.dev;
@@ -455,6 +480,10 @@ static int mxl86211c_probe(struct phy_device *phydev)
 		if (ret)
 			return ret;
 	}
+
+	ret = mxl86211c_release_super_isolate(phydev);
+	if (ret)
+		return ret;
 
 	ret = gpy_probe(phydev);
 	if (ret)
@@ -1481,7 +1510,7 @@ static struct phy_driver gpy_drivers[] = {
 		PHY_ID_MATCH_MODEL(PHY_ID_MXL86211C),
 		.name		= "Maxlinear Ethernet MxL86211C",
 		.get_features	= genphy_c45_pma_read_abilities,
-		.config_init	= gpy21x_config_init,
+		.config_init	= mxl86211c_config_init,
 		.probe		= mxl86211c_probe,
 		.inband_caps	= gpy_inband_caps,
 		.config_inband	= gpy_config_inband,
